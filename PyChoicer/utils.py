@@ -81,7 +81,7 @@ def print_banner() -> None:
     print()
     print(colorize("  ╔══════════════════════════════════════╗", Color.CYAN))
     print(colorize("  ║  ", Color.CYAN) + colorize("PyChoicer", Color.BOLD + Color.YELLOW) +
-          colorize(" v1.2                    ║", Color.CYAN))
+          colorize(" v1.3.1                      ║", Color.CYAN))
     print(colorize("  ║  ", Color.CYAN) + colorize("Rank items via pairwise comparison  ", Color.WHITE) +
           colorize("║", Color.CYAN))
     print(colorize("  ╚══════════════════════════════════════╝", Color.CYAN))
@@ -106,6 +106,9 @@ def print_help() -> None:
             ("preset load <name>",   "Load a preset into current items"),
             ("preset save <name>",   "Save current items as a preset"),
             ("preset delete <name>", "Delete a saved preset"),
+            ("seeds",                "Install built-in example presets"),
+            ("seeds --force",        "Install and overwrite existing ones"),
+            ("seeds remove",         "Remove the seeds feature entirely"),
         ]),
         ("COMPARE", [
             ("compare -r / --rank",  "Full ranking   (merge-sort, ~n·log n)"),
