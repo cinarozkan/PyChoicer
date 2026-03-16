@@ -106,8 +106,6 @@ def print_help() -> None:
             ("preset load <name>",   "Load a preset into current items"),
             ("preset save <name>",   "Save current items as a preset"),
             ("preset delete <name>", "Delete a saved preset"),
-            ("seeds",                "Install built-in example presets"),
-            ("seeds --force",        "Install and overwrite existing ones"),
         ]),
         ("COMPARE", [
             ("compare -r / --rank",  "Full ranking   (merge-sort, ~n·log n)"),

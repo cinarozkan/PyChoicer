@@ -8,6 +8,7 @@ Manages the interactive REPL session:
   - Handles preset load/save/list/delete
 """
 
+import os
 import sys
 from .utils import (
     Color, colorize, bold, info, success, warning, error, dim,
@@ -19,7 +20,6 @@ from .presets import (
     save_preset, load_preset, list_presets, delete_preset,
     preset_exists, _sanitize_name,
 )
-from .seeds import install_seeds, seed_names
 
 
 # ---------------------------------------------------------------------------
@@ -494,55 +494,6 @@ def _cmd_compare(items: list[str], args: str) -> None:
             print(warning("\n  ⚠  Tournament aborted."))
 
 
-def _cmd_seeds(args: str) -> None:
-    """
-    Handle the 'seeds' command.
-
-    Writes the built-in example presets to the presets/ directory.
-    Existing presets are skipped unless --force is passed.
-
-    Args:
-        args: Optional flag string. Pass '--force' to overwrite existing files.
-    """
-    force = args.strip().lower() in ("--force", "-f")
-
-    names = seed_names()
-    print()
-    print(bold("  Built-in seed presets:"))
-    print(separator())
-    for name in names:
-        print(f"  {colorize('·', Color.GRAY)}  {colorize(name, Color.CYAN)}")
-    print(separator())
-
-    if not force:
-        print(dim("  Existing presets will be skipped.  Use 'seeds --force' to overwrite."))
-
-    print(warning("  Install seed presets? [y/N] "), end="", flush=True)
-    try:
-        ans = input().strip().lower()
-    except (EOFError, KeyboardInterrupt):
-        print()
-        return
-
-    if ans != "y":
-        print(dim("  Cancelled."))
-        return
-
-    results = install_seeds(overwrite=force)
-    print()
-    for name, status in results:
-        if status == "written":
-            icon = success("✓")
-            label = colorize("written", Color.GREEN)
-        elif status == "overwritten":
-            icon = success("✓")
-            label = colorize("overwritten", Color.YELLOW)
-        else:  # skipped
-            icon = dim("·")
-            label = colorize("skipped (already exists)", Color.GRAY)
-        print(f"  {icon}  {colorize(name, Color.CYAN)}  {dim('—')}  {label}")
-    print()
-
 
 # ---------------------------------------------------------------------------
 # Main REPL loop
@@ -601,8 +552,6 @@ def run() -> None:
         elif cmd == "preset":
             items = _cmd_preset(items, args)
 
-        elif cmd == "seeds":
-            _cmd_seeds(args)
 
         elif cmd == "compare":
             _cmd_compare(items, args)
