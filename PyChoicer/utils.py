@@ -1,5 +1,5 @@
 """
-utils.py - Utility functions for ChoiceRanker CLI.
+utils.py - Utility functions for PyChoicer CLI.
 
 Provides colored output, formatting helpers, and shared constants.
 """
@@ -77,11 +77,11 @@ def separator(char: str = "─", width: int = 40) -> str:
 
 
 def print_banner() -> None:
-    """Print the ChoiceRanker welcome banner."""
+    """Print the PyChoicer welcome banner."""
     print()
     print(colorize("  ╔══════════════════════════════════════╗", Color.CYAN))
-    print(colorize("  ║  ", Color.CYAN) + colorize("ChoiceRanker", Color.BOLD + Color.YELLOW) +
-          colorize(" v1.1                   ║", Color.CYAN))
+    print(colorize("  ║  ", Color.CYAN) + colorize("PyChoicer", Color.BOLD + Color.YELLOW) +
+          colorize(" v1.2                    ║", Color.CYAN))
     print(colorize("  ║  ", Color.CYAN) + colorize("Rank items via pairwise comparison  ", Color.WHITE) +
           colorize("║", Color.CYAN))
     print(colorize("  ╚══════════════════════════════════════╝", Color.CYAN))
@@ -106,6 +106,8 @@ def print_help() -> None:
             ("preset load <name>",   "Load a preset into current items"),
             ("preset save <name>",   "Save current items as a preset"),
             ("preset delete <name>", "Delete a saved preset"),
+            ("seeds",                "Install built-in example presets"),
+            ("seeds --force",        "Install and overwrite existing ones"),
         ]),
         ("COMPARE", [
             ("compare -r / --rank",  "Full ranking   (merge-sort, ~n·log n)"),

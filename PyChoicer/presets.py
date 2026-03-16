@@ -1,5 +1,5 @@
 """
-presets.py - Preset management for ChoiceRanker.
+presets.py - Preset management for PyChoicer.
 
 Presets are plain-text files stored in a 'presets/' directory next to main.py.
 Each preset file contains one item per line.
@@ -42,8 +42,12 @@ def _sanitize_name(name: str) -> str:
     """
     Sanitize a preset name for use as a filename.
 
-    Strips whitespace, lowercases, replaces spaces with underscores,
-    and removes any character that isn't alphanumeric, underscore, or hyphen.
+    Strips whitespace, replaces spaces with underscores,
+    and removes any character that isn't alphanumeric, underscore, hyphen,
+    or a Unicode letter (to support names like Hülkenberg).
+
+    Case is preserved so that seed preset names like '2026-F1-Drivers'
+    round-trip correctly.
 
     Args:
         name: Raw preset name from user input.
@@ -51,7 +55,7 @@ def _sanitize_name(name: str) -> str:
     Returns:
         Safe filename-compatible string, or empty string if nothing remains.
     """
-    name = name.strip().lower()
+    name = name.strip()
     name = name.replace(" ", "_")
     name = re.sub(r"[^\w\-]", "", name)
     return name

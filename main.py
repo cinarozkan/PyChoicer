@@ -1,11 +1,11 @@
 """
-main.py - Entry point for ChoiceRanker.
+main.py - Entry point for PyChoicer.
 
 Run with:
     python main.py
 """
 
-from choice_ranker.cli import run
+from PyChoicer.cli import run
 
 if __name__ == "__main__":
     run()
