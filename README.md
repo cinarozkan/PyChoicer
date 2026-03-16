@@ -98,6 +98,17 @@ preset delete cities
 
 Preset names preserve their casing. Spaces are converted to underscores; special characters are removed.
 
+Presets are plain text, one item per line. You can create or edit them in any text editor.
+
+```
+# presets/cities.txt
+istanbul
+berlin
+london
+konya
+new york
+```
+
 ---
 
 ### Seeds
@@ -111,20 +122,3 @@ The `seeds` command installs built-in example presets into the `presets/` direct
 | `seeds remove` | Remove the seeds feature entirely from the project. |
 
 > These two presets serve no other purpose than making my life easier, so if you want, I recommend removing them completely. To remove the seeds feature entirely, run `seeds remove` in the CLI. This deletes `seeds.py`, cleans all references from the codebase, and removes `uninstall_seeds.py` itself.
-
----
-
-## Preset File Format
-
-Presets are plain text, one item per line. You can create or edit them in any text editor.
-
-```
-# presets/cities.txt
-istanbul
-berlin
-london
-konya
-new york
-```
-
-
