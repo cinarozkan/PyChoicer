@@ -81,7 +81,7 @@ def print_banner() -> None:
     print()
     print(colorize("  ╔══════════════════════════════════════╗", Color.CYAN))
     print(colorize("  ║  ", Color.CYAN) + colorize("ChoiceRanker", Color.BOLD + Color.YELLOW) +
-          colorize(" v1.0                   ║", Color.CYAN))
+          colorize(" v1.1                   ║", Color.CYAN))
     print(colorize("  ║  ", Color.CYAN) + colorize("Rank items via pairwise comparison  ", Color.WHITE) +
           colorize("║", Color.CYAN))
     print(colorize("  ╚══════════════════════════════════════╝", Color.CYAN))
@@ -93,17 +93,36 @@ def print_help() -> None:
     print()
     print(bold("  Available Commands:"))
     print(separator())
-    commands = [
-        ("add   / a", "Add items to rank  (comma-separated)"),
-        ("list  / l", "List current items"),
-        ("reset / r", "Clear all items"),
-        ("compare -r / --rank", "Full ranking mode   (merge-sort)"),
-        ("compare -b / --best", "Find best item      (tournament)"),
-        ("help  / h", "Show this help screen"),
-        ("exit  / q", "Quit the program"),
+
+    sections = [
+        ("ITEMS", [
+            ("add / a  <items>",     "Add items  (comma-separated)"),
+            ("remove / rm  <item>",  "Remove an item by name or number"),
+            ("list / l",             "List current items"),
+            ("reset",                "Clear all items"),
+        ]),
+        ("PRESETS", [
+            ("preset list",          "Show all saved presets"),
+            ("preset load <name>",   "Load a preset into current items"),
+            ("preset save <name>",   "Save current items as a preset"),
+            ("preset delete <name>", "Delete a saved preset"),
+        ]),
+        ("COMPARE", [
+            ("compare -r / --rank",  "Full ranking   (merge-sort, ~n·log n)"),
+            ("compare -b / --best",  "Find best item (tournament, n-1)"),
+        ]),
+        ("OTHER", [
+            ("help / h",             "Show this help screen"),
+            ("exit / q",             "Quit the program"),
+        ]),
     ]
-    for cmd, desc in commands:
-        print(f"  {colorize(cmd, Color.YELLOW):<30} {colorize(desc, Color.WHITE)}")
+
+    for section_title, commands in sections:
+        print(f"\n  {colorize(section_title, Color.GRAY + Color.BOLD)}")
+        for cmd, desc in commands:
+            print(f"  {colorize(cmd, Color.YELLOW):<36} {colorize(desc, Color.WHITE)}")
+
+    print()
     print(separator())
     print()
 

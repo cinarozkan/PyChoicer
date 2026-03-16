@@ -5,7 +5,7 @@ Manages the interactive REPL session:
   - Parses user commands
   - Maintains item list state
   - Dispatches to ranking algorithms
-  - Displays results
+  - Handles preset load/save/list/delete
 """
 
 import sys
@@ -15,6 +15,10 @@ from .utils import (
 )
 from .ranking import merge_sort_rank, tournament_best
 from .comparison import ComparisonAborted
+from .presets import (
+    save_preset, load_preset, list_presets, delete_preset,
+    preset_exists, _sanitize_name,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -63,21 +67,23 @@ def _display_items(items: list[str]) -> None:
     for i, item in enumerate(items, start=1):
         print(f"  {colorize(str(i) + '.', Color.GRAY)}  {item}")
     print(separator())
+    print(f"  {dim(str(len(items)) + ' item(s) total.')}")
     print()
 
 
 # ---------------------------------------------------------------------------
-# Command handlers
+# Command handlers — Items
 # ---------------------------------------------------------------------------
 
 def _cmd_add(items: list[str], args: str) -> list[str]:
     """
     Handle the 'add' command.
 
-    If args are provided on the same line (e.g. 'add Berlin, London'),
-    use them directly. Otherwise prompt interactively.
+    Accepts inline args ('add Berlin, London') or prompts interactively.
+    Merges with existing items, silently skipping duplicates.
 
-    Returns the updated items list.
+    Returns:
+        Updated items list.
     """
     if args:
         raw = args
@@ -99,7 +105,6 @@ def _cmd_add(items: list[str], args: str) -> list[str]:
         print(error("  No valid items found."))
         return items
 
-    # Merge with existing, skip duplicates
     existing_lower = {x.lower() for x in items}
     added = 0
     for item in new_items:
@@ -113,6 +118,74 @@ def _cmd_add(items: list[str], args: str) -> list[str]:
     if skipped:
         msg += warning(f"  ({skipped} duplicate(s) skipped)")
     print(msg)
+    return items
+
+
+def _cmd_remove(items: list[str], args: str) -> list[str]:
+    """
+    Handle the 'remove' command.
+
+    The user can specify either:
+      - A number  (1-based index from 'list')
+      - The item's name (case-insensitive, partial prefix match if unambiguous)
+
+    If no args are given, the current list is displayed and the user is
+    prompted interactively.
+
+    Returns:
+        Updated items list.
+    """
+    if not items:
+        print(warning("  No items to remove."))
+        return items
+
+    if not args:
+        _display_items(items)
+        print(info("  Enter item number or name to remove:"))
+        print(colorize("  > ", Color.YELLOW), end="", flush=True)
+        try:
+            args = input().strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return items
+
+    if not args:
+        print(error("  No input provided."))
+        return items
+
+    # Try numeric index first
+    if args.isdigit():
+        idx = int(args) - 1
+        if 0 <= idx < len(items):
+            removed = items.pop(idx)
+            print(success(f"  ✓  Removed: {colorize(removed, Color.WHITE + Color.BOLD)}"))
+            return items
+        else:
+            print(error(f"  ✗  No item at position {args}."))
+            return items
+
+    # Case-insensitive name match
+    target = args.lower()
+    matches = [(i, item) for i, item in enumerate(items) if item.lower() == target]
+
+    # Fallback: prefix match
+    if not matches:
+        matches = [(i, item) for i, item in enumerate(items) if item.lower().startswith(target)]
+
+    if len(matches) == 1:
+        idx, removed = matches[0]
+        items.pop(idx)
+        print(success(f"  ✓  Removed: {colorize(removed, Color.WHITE + Color.BOLD)}"))
+        return items
+    elif len(matches) == 0:
+        print(error(f"  ✗  No item matching '{args}' found."))
+    else:
+        # Ambiguous — show candidates
+        print(warning(f"  Ambiguous match. Did you mean one of these?"))
+        for i, item in matches:
+            print(f"    {colorize(str(i + 1) + '.', Color.GRAY)}  {item}")
+        print(dim("  Use the number to remove specifically."))
+
     return items
 
 
@@ -134,6 +207,234 @@ def _cmd_reset(items: list[str]) -> list[str]:
     return items
 
 
+# ---------------------------------------------------------------------------
+# Command handlers — Presets
+# ---------------------------------------------------------------------------
+
+def _display_presets() -> None:
+    """Print the list of saved presets with item counts."""
+    names = list_presets()
+    if not names:
+        print(warning("  No presets saved yet.  Use 'preset save <name>' to create one."))
+        return
+    print()
+    print(bold("  Saved Presets:"))
+    print(separator())
+    for i, name in enumerate(names, start=1):
+        try:
+            items = load_preset(name)
+            count_str = colorize(f"({len(items)} items)", Color.GRAY)
+        except Exception:
+            count_str = colorize("(unreadable)", Color.RED)
+        print(f"  {colorize(str(i) + '.', Color.GRAY)}  {colorize(name, Color.CYAN)}  {count_str}")
+    print(separator())
+    print()
+
+
+def _pick_preset_interactively(prompt: str) -> str | None:
+    """
+    Show preset list and let the user pick one by number or name.
+
+    Args:
+        prompt: Action description shown to the user (e.g. 'load', 'delete').
+
+    Returns:
+        The chosen preset name, or None if aborted.
+    """
+    names = list_presets()
+    if not names:
+        print(warning("  No presets available."))
+        return None
+
+    print()
+    print(bold(f"  Choose a preset to {prompt}:"))
+    print(separator())
+    for i, name in enumerate(names, start=1):
+        try:
+            items = load_preset(name)
+            count_str = colorize(f"({len(items)} items)", Color.GRAY)
+        except Exception:
+            count_str = ""
+        print(f"  {colorize(str(i) + '.', Color.GRAY)}  {colorize(name, Color.CYAN)}  {count_str}")
+    print(separator())
+    print(colorize("  > ", Color.YELLOW), end="", flush=True)
+    try:
+        raw = input().strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return None
+
+    if not raw:
+        return None
+
+    if raw.isdigit():
+        idx = int(raw) - 1
+        if 0 <= idx < len(names):
+            return names[idx]
+        print(error(f"  ✗  No preset at position {raw}."))
+        return None
+
+    # Name lookup (exact, then prefix)
+    target = raw.lower()
+    if target in names:
+        return target
+    matches = [n for n in names if n.startswith(target)]
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        print(warning(f"  Ambiguous preset name. Matches: {', '.join(matches)}"))
+    else:
+        print(error(f"  ✗  Preset '{raw}' not found."))
+    return None
+
+
+def _cmd_preset(items: list[str], args: str) -> list[str]:
+    """
+    Handle all 'preset' sub-commands:
+        preset list
+        preset load [name]
+        preset save [name]
+        preset delete [name]
+
+    Args:
+        items: Current item list.
+        args:  Everything after 'preset' on the command line.
+
+    Returns:
+        Possibly-updated items list.
+    """
+    parts = args.split(None, 1)
+    sub = parts[0].lower() if parts else ""
+    sub_args = parts[1].strip() if len(parts) > 1 else ""
+
+    # ── preset list ────────────────────────────────────────────────────────
+    if sub in ("list", "l", ""):
+        _display_presets()
+        return items
+
+    # ── preset load ────────────────────────────────────────────────────────
+    if sub in ("load",):
+        name = sub_args or _pick_preset_interactively("load")
+        if not name:
+            return items
+        name = _sanitize_name(name)
+        try:
+            loaded = load_preset(name)
+        except FileNotFoundError:
+            print(error(f"  ✗  Preset '{name}' not found."))
+            return items
+        except ValueError as e:
+            print(error(f"  ✗  {e}"))
+            return items
+
+        if items:
+            print(warning(f"  You have {len(items)} existing item(s).  Replace or merge? [r/m] "), end="", flush=True)
+            try:
+                choice = input().strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return items
+            if choice == "r":
+                items = loaded
+                print(success(f"  ✓  Loaded preset '{name}' — {len(items)} items."))
+            elif choice == "m":
+                # Merge: add only new items
+                existing_lower = {x.lower() for x in items}
+                added = 0
+                for item in loaded:
+                    if item.lower() not in existing_lower:
+                        items.append(item)
+                        existing_lower.add(item.lower())
+                        added += 1
+                print(success(f"  ✓  Merged preset '{name}' — {added} new item(s) added."))
+            else:
+                print(dim("  Load cancelled."))
+        else:
+            items = loaded
+            print(success(f"  ✓  Loaded preset '{colorize(name, Color.CYAN + Color.BOLD)}' — {len(items)} items."))
+
+        return items
+
+    # ── preset save ────────────────────────────────────────────────────────
+    if sub in ("save",):
+        if not items:
+            print(error("  ✗  No items to save. Add items first."))
+            return items
+
+        if sub_args:
+            name = sub_args
+        else:
+            print(info("  Enter preset name:"))
+            print(colorize("  > ", Color.YELLOW), end="", flush=True)
+            try:
+                name = input().strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return items
+
+        if not name.strip():
+            print(error("  ✗  Preset name cannot be empty."))
+            return items
+
+        clean = _sanitize_name(name)
+        if not clean:
+            print(error("  ✗  Preset name contains no valid characters."))
+            return items
+
+        # Warn if overwriting
+        if preset_exists(clean):
+            print(warning(f"  Preset '{clean}' already exists. Overwrite? [y/N] "), end="", flush=True)
+            try:
+                ans = input().strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return items
+            if ans != "y":
+                print(dim("  Save cancelled."))
+                return items
+
+        try:
+            saved_name = save_preset(name, items)
+        except ValueError as e:
+            print(error(f"  ✗  {e}"))
+            return items
+
+        print(success(f"  ✓  Saved {len(items)} items as preset '{colorize(saved_name, Color.CYAN + Color.BOLD)}'."))
+        return items
+
+    # ── preset delete ──────────────────────────────────────────────────────
+    if sub in ("delete", "del", "rm"):
+        name = sub_args or _pick_preset_interactively("delete")
+        if not name:
+            return items
+        name = _sanitize_name(name)
+        if not preset_exists(name):
+            print(error(f"  ✗  Preset '{name}' not found."))
+            return items
+        print(warning(f"  Delete preset '{name}'? [y/N] "), end="", flush=True)
+        try:
+            ans = input().strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return items
+        if ans == "y":
+            try:
+                delete_preset(name)
+                print(success(f"  ✓  Preset '{name}' deleted."))
+            except FileNotFoundError as e:
+                print(error(f"  ✗  {e}"))
+        else:
+            print(dim("  Delete cancelled."))
+        return items
+
+    print(error(f"  ✗  Unknown preset sub-command: '{sub}'.  Try: list, load, save, delete"))
+    return items
+
+
+# ---------------------------------------------------------------------------
+# Command handlers — Compare
+# ---------------------------------------------------------------------------
+
 def _cmd_compare(items: list[str], args: str) -> None:
     """
     Handle the 'compare' command.
@@ -143,7 +444,7 @@ def _cmd_compare(items: list[str], args: str) -> None:
         -b / --best   Tournament knockout to find best item.
     """
     if len(items) < 2:
-        print(error("  ✗  Need at least 2 items. Use 'add' to add items."))
+        print(error("  ✗  Need at least 2 items. Use 'add' or 'preset load' to add items."))
         return
 
     flag = args.strip().lower()
@@ -153,7 +454,6 @@ def _cmd_compare(items: list[str], args: str) -> None:
     elif flag in ("-b", "--best"):
         mode = "best"
     else:
-        # Interactive mode selection if no valid flag given
         print()
         print(bold("  Choose comparison mode:"))
         print(f"    {colorize('[1]', Color.CYAN)}  Full ranking  (merge-sort, ~n·log n questions)")
@@ -183,8 +483,7 @@ def _cmd_compare(items: list[str], args: str) -> None:
             _display_full_ranking(ranked, count)
         except ComparisonAborted:
             print(warning("\n  ⚠  Ranking aborted."))
-
-    else:  # best
+    else:
         print(info(f"  Finding best item among {len(items)} items…"))
         print(dim("  (Type 'q' at any prompt to abort.)"))
         try:
@@ -224,7 +523,6 @@ def run() -> None:
         if not raw:
             continue
 
-        # Split command from inline arguments
         parts = raw.split(None, 1)
         cmd = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""
@@ -240,17 +538,22 @@ def run() -> None:
         elif cmd in ("add", "a"):
             items = _cmd_add(items, args)
 
+        elif cmd in ("remove", "rm"):
+            items = _cmd_remove(items, args)
+
         elif cmd in ("list", "l"):
             _display_items(items)
 
-        elif cmd in ("reset", "r"):
+        elif cmd == "reset":
             items = _cmd_reset(items)
+
+        elif cmd == "preset":
+            items = _cmd_preset(items, args)
 
         elif cmd == "compare":
             _cmd_compare(items, args)
 
         elif cmd == "c":
-            # Short alias 'c' always prompts for mode interactively
             _cmd_compare(items, "")
 
         else:
