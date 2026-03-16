@@ -3,6 +3,8 @@
 A command-line tool for ranking items through pairwise comparisons.  
 Instead of asking "rank these 10 things", it asks simple **A or B?** questions and builds the ranking from your answers.
 
+Keep in mind this project was made with AI for my own needs so it's fairly opinionated.
+
 ---
 
 ## Setup
@@ -108,12 +110,7 @@ The `seeds` command installs built-in example presets into the `presets/` direct
 | `seeds --force` | Install and overwrite existing presets. |
 | `seeds remove` | Remove the seeds feature entirely from the project. |
 
-**Available seed presets:**
-
-- `2026-F1-Drivers` — 22 drivers on the 2026 Formula 1 grid
-- `Popular-Linux-Distros` — 31 well-known Linux distributions
-
-> These two presets exist because of my personal interests in Formula 1 and Linux — they serve no other purpose than being convenient starting points for me. If you want to add your own seed presets, open `pychoicer/seeds.py` and append an entry to the `SEED_PRESETS` dict. To remove the seeds feature entirely, run `seeds remove` in the CLI or `python uninstall_seeds.py` directly — this deletes `seeds.py`, cleans all references from the codebase, and removes `uninstall_seeds.py` itself.
+> These two presets serve no other purpose than making my life easier, so if you want, I recommend removing them completely. To remove the seeds feature entirely, run `seeds remove` in the CLI. This deletes `seeds.py`, cleans all references from the codebase, and removes `uninstall_seeds.py` itself.
 
 ---
 
