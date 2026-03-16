@@ -1,4 +1,4 @@
-# PyChoicer v1.2
+# PyChoicer v1.3.1
 
 A command-line tool for ranking items through pairwise comparisons.  
 Instead of asking "rank these 10 things", it asks simple **A or B?** questions and builds the ranking from your answers.
@@ -20,16 +20,19 @@ python main.py
 ```
 PyChoicer/
 ├── main.py
-├── pychoicer/
-│   ├── cli.py        # REPL loop and command dispatcher
-│   ├── ranking.py    # Merge-sort and tournament algorithms
-│   ├── comparison.py # Pairwise question engine
-│   ├── presets.py    # Preset save/load/list/delete
-│   ├── seeds.py      # Built-in example presets
-│   └── utils.py      # Colors, formatting, input parsing
-├── presets/          # Auto-created. Stores preset .txt files
-└── README.md
+├── uninstall_seeds.py   # run to remove the seeds feature entirely
+├── README.md
+└── pychoicer/
+    ├── __init__.py
+    ├── cli.py        # REPL loop and command dispatcher
+    ├── ranking.py    # Merge-sort and tournament algorithms
+    ├── comparison.py # Pairwise question engine
+    ├── presets.py    # Preset save/load/list/delete
+    ├── seeds.py      # Built-in example presets
+    └── utils.py      # Colors, formatting, input parsing
 ```
+
+`presets/` directory is auto-created on first use.
 
 ---
 
@@ -103,13 +106,14 @@ The `seeds` command installs built-in example presets into the `presets/` direct
 |---|---|
 | `seeds` | Install built-in presets. Skips any that already exist. |
 | `seeds --force` | Install and overwrite existing presets. |
+| `seeds remove` | Remove the seeds feature entirely from the project. |
 
 **Available seed presets:**
 
 - `2026-F1-Drivers` — 22 drivers on the 2026 Formula 1 grid
 - `Popular-Linux-Distros` — 31 well-known Linux distributions
 
-> These two presets exist because of my personal interests in Formula 1 and Linux — they serve no other purpose than being convenient starting points for me. If you want to add your own seed presets, open `pychoicer/seeds.py` and append an entry to the `SEED_PRESETS` dict.
+> These two presets exist because of my personal interests in Formula 1 and Linux — they serve no other purpose than being convenient starting points for me. If you want to add your own seed presets, open `pychoicer/seeds.py` and append an entry to the `SEED_PRESETS` dict. To remove the seeds feature entirely, run `seeds remove` in the CLI or `python uninstall_seeds.py` directly — this deletes `seeds.py`, cleans all references from the codebase, and removes `uninstall_seeds.py` itself.
 
 ---
 
