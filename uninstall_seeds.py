@@ -17,7 +17,14 @@ import os
 import re
 import sys
 
-BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# When called via subprocess from cli.py, accept an explicit project dir
+# to avoid __file__ resolution issues with relative paths.
+if "--project-dir" in sys.argv:
+    idx = sys.argv.index("--project-dir")
+    if idx + 1 < len(sys.argv):
+        BASE_DIR = sys.argv[idx + 1]
 SEEDS_FILE = os.path.join(BASE_DIR, "pychoicer", "seeds.py")
 CLI_FILE   = os.path.join(BASE_DIR, "pychoicer", "cli.py")
 UTILS_FILE = os.path.join(BASE_DIR, "pychoicer", "utils.py")

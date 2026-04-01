@@ -509,14 +509,17 @@ def _cmd_seeds(args: str) -> None:
     # ── seeds remove ──────────────────────────────────────────────────────
     if flag == "remove":
         import subprocess
-        script = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uninstall_seeds.py")
+        # Use absolute path of this file to reliably find project root
+        pkg_dir     = os.path.dirname(os.path.abspath(__file__))
+        project_dir = os.path.dirname(pkg_dir)
+        script      = os.path.join(project_dir, "uninstall_seeds.py")
         if not os.path.isfile(script):
             print(error("  ✗  uninstall_seeds.py not found next to main.py."))
             return
         print()
         print(dim("  Handing off to uninstall_seeds.py…"))
         print()
-        subprocess.run([sys.executable, script], check=False)
+        subprocess.run([sys.executable, script, "--project-dir", project_dir], check=False)
         return
 
     # ── seeds / seeds --force ─────────────────────────────────────────────
