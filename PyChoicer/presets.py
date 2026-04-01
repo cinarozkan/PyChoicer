@@ -46,8 +46,7 @@ def _sanitize_name(name: str) -> str:
     and removes any character that isn't alphanumeric, underscore, hyphen,
     or a Unicode letter (to support names like Hülkenberg).
 
-    Case is preserved so that seed preset names like '2026-F1-Drivers'
-    round-trip correctly.
+    Case is preserved.
 
     Args:
         name: Raw preset name from user input.

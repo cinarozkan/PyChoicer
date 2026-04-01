@@ -1,9 +1,9 @@
-# PyChoicer v1.3.1
+# PyChoicer v1.4.1
 
 A command-line tool for ranking items through pairwise comparisons.  
 Instead of asking "rank these 10 things", it asks simple **A or B?** questions and builds the ranking from your answers.
 
-Keep in mind this project was made with AI for my own needs so it's fairly opinionated.
+This project was originally made with AI for my own needs
 
 ---
 
@@ -22,7 +22,6 @@ python main.py
 ```
 PyChoicer/
 ├── main.py
-├── uninstall_seeds.py   # run to remove the seeds feature entirely
 ├── README.md
 └── pychoicer/
     ├── __init__.py
@@ -30,7 +29,6 @@ PyChoicer/
     ├── ranking.py    # Merge-sort and tournament algorithms
     ├── comparison.py # Pairwise question engine
     ├── presets.py    # Preset save/load/list/delete
-    ├── seeds.py      # Built-in example presets
     └── utils.py      # Colors, formatting, input parsing
 ```
 
@@ -110,15 +108,3 @@ new york
 ```
 
 ---
-
-### Seeds
-
-The `seeds` command installs built-in example presets into the `presets/` directory.
-
-| Command | Description |
-|---|---|
-| `seeds` | Install built-in presets. Skips any that already exist. |
-| `seeds --force` | Install and overwrite existing presets. |
-| `seeds remove` | Remove the seeds feature entirely from the project. |
-
-> These two presets serve no other purpose than making my life easier, so if you want, I recommend removing them completely. To remove the seeds feature entirely, run `seeds remove` in the CLI. This deletes `seeds.py`, cleans all references from the codebase, and removes `uninstall_seeds.py` itself.
